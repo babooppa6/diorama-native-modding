@@ -256,6 +256,19 @@ void PELoader::DoTLS()
 {
     auto directory = GetHeaderDictionary(IMAGE_DIRECTORY_ENTRY_TLS);
     
+
+    const IMAGE_TLS_DIRECTORY *sourceTls = (PIMAGE_TLS_DIRECTORY)(_newNTHeader->OptionalHeader.ImageBase + directory->VirtualAddress);
+
+    // Copy TLS data
+    {
+        auto size = sourceTls->EndAddressOfRawData - sourceTls->StartAddressOfRawData;
+
+        DWORD old;
+        VirtualProtect((LPVOID *)__readfsdword(0x2C), size, PAGE_READWRITE, &old);
+
+        memcpy(*(LPVOID *)__readfsdword(0x2C), reinterpret_cast<uintptr_t*>(sourceTls->StartAddressOfRawData), size);
+    }
+
     if (directory->VirtualAddress > 0)
     {
         PIMAGE_TLS_DIRECTORY tls = (PIMAGE_TLS_DIRECTORY)(_newNTHeader->OptionalHeader.ImageBase + directory->VirtualAddress);
